@@ -224,7 +224,7 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
     LMIC_setLinkCheckMode(0);
 
     // TTN uses SF9 for its RX2 window.
-    LMIC.dn2Dr = DR_SF12;
+    LMIC.dn2Dr = DR_SF9;
 
     // Set data rate and transmit power for uplink (note: txpow seems to be ignored by the library)
     LMIC_setDrTxpow(DR_SF12, 20);
