@@ -24,7 +24,7 @@
 #include <Arduino.h>
 #include <LowPower.h>
 
-#define SERIAL_BAUD         11500
+#define DEFAULT_BAUD         9600
 
 // -----------------------------------------------------------------------------
 // TTN payloads - see: https://www.thethingsnetwork.org/docs/devices/bytes.html

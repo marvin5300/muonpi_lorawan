@@ -229,8 +229,8 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
     // Set data rate and transmit power for uplink (note: txpow seems to be ignored by the library)
     LMIC_setDrTxpow(DR_SF12, 20);
 
-    os_radio(OP_TXDATA);
-    LMIC.opmode = OP_TXDATA;
+    // os_radio(OP_TXDATA);
+    // LMIC.opmode = OP_TXDATA;
     return true;
 }
 

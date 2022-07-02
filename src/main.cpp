@@ -38,22 +38,19 @@ void(* resetFunc) (void) = 0;  //declare reset function at address 0
 
 int sleepcycles = 1; // 130 X 8 seconds = ~17 mins sleep
 
-static unsigned counter = 0; // counts up
-
 // ============================================================================
-// void(* resetFunc) (void) = 0;  //declare reset function at address 0
 
-
-// AmbaSat Library objects (see: https://platformio.org/lib/search?query=ambasat)
-// AmbaSatSHT31 *ambasatSHT31;
 MuonPiLMIC *muonpi_lmic;
-// AmbaSatLSM9DS1 *ambasatLSM9DS1;
 
 // ============================================================================
 
 void setup()
 {
-    Serial.begin(9600);
+    #ifndef SERIAL_BAUD
+    Serial.begin(DEFAULT_BAUD);
+    #else
+    Serial.begin(SERIAL_BAUD);
+    #endif
 
     while (!Serial)
         delay(10);
@@ -70,34 +67,28 @@ void setup()
     
     // Setup LMIC
     muonpi_lmic->setup(0x13, DEVADDR, appskey, nwkskey);
-
-    Serial.print(F("Setup complete.\n"));
-    Serial.flush();
 }
 
 // ============================================================================
 
 void loop()
 {
-    LoraMessage message;
+        LoraMessage message;
 
-    message.addUint32(counter);
-    counter++;
+        message.addUint32(42u);
 
-    Serial.print(F("Sending message. Counter: "));
-    Serial.print(String(counter) + "\n");
-    Serial.flush();
-    delay(50);
+        Serial.print(F("Sending message. 42\n"));
+        Serial.flush();
+        delay(50);
 
-    muonpi_lmic->sendLoraPayload(1,message);
-    
-    delay(10000);
-    // sleep 8 seconds * sleepcycles
-    // for (int i=0; i < sleepcycles; i++)
-    // {
-    //     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
-    // }
-    // resetFunc();
+        muonpi_lmic->sendLoraPayload(1,message);
+
+        // sleep 8 seconds * sleepcycles
+        for (int i=0; i < sleepcycles; i++)
+        {
+            LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+        }
+        resetFunc();
 }
 
 // ============================================================================
