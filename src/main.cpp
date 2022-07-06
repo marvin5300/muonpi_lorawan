@@ -18,11 +18,14 @@
 #include "main.h"
 // #include "AmbaSatSHT31.h"
 #include "muonpi_lmic.h"
+// #include <string.h>
 // #include "AmbaSatLSM9DS1.h"
 
 // TTN *****************************
 #define DEVICEID "eui-70b3d57ed0052abe"
 #define ABP_DEVICEID "eui-70b3d57ed0052abe"
+
+char *test{"Dies ist ein Test"};
 
 // The Network Session Key / DO NOT SHARE
 static const PROGMEM u1_t NWKSKEY[16] = {0xCC, 0xB8, 0xF3, 0xD3, 0xFD, 0x39, 0x75, 0xAE, 0xE4, 0x84, 0x35, 0x90, 0xFE, 0x37, 0x1C, 0x88};
@@ -34,7 +37,7 @@ static const u1_t PROGMEM APPSKEY[16] = {0xA8, 0xDF, 0x3A, 0xC7, 0x51, 0xB2, 0xD
 static const u4_t DEVADDR = 0x260BC37E ;
 /********************************/
 
-void(* resetFunc) (void) = 0;  //declare reset function at address 0
+// void(* resetFunc) (void) = 0;  //declare reset function at address 0
 
 int sleepcycles = 1; // 130 X 8 seconds = ~17 mins sleep
 
@@ -73,22 +76,19 @@ void setup()
 
 void loop()
 {
-        LoraMessage message;
 
-        message.addUint32(42u);
+    Serial.print(F("Sending message. 42\n"));
+    Serial.flush();
+    delay(50);
 
-        Serial.print(F("Sending message. 42\n"));
-        Serial.flush();
-        delay(50);
+    muonpi_lmic->sendLoraPayload(1,reinterpret_cast<uint8_t*>(test));
 
-        muonpi_lmic->sendLoraPayload(1,message);
-
-        // sleep 8 seconds * sleepcycles
-        for (int i=0; i < sleepcycles; i++)
-        {
-            LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
-        }
-        resetFunc();
+    // sleep 8 seconds * sleepcycles
+    for (int i=0; i < sleepcycles; i++)
+    {
+        LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+    }
+    // resetFunc();
 }
 
 // ============================================================================

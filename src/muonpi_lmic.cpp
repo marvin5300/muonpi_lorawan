@@ -96,13 +96,13 @@ void onEvent (ev_t ev)
         case EV_JOINING:
             Serial.print(F("EV_JOINING\n"));
         break;
-     
+
         case EV_JOINED:
             Serial.print(F("EV_JOINED\n"));
             // Disable link check validation (automatically enabled
             // during join, but not supported by TTN at this time).
             LMIC_setLinkCheckMode(0);
-                       
+
             // after Joining a job with the values will be sent.
             joined = true;
         break;
@@ -127,7 +127,7 @@ void onEvent (ev_t ev)
                 // this number of times, with a maximum of 10
                 Serial.print(F("Data Received: \n"));
                 Serial.print(LMIC.frame[LMIC.dataBeg]+"\n");
-          
+
                 i=(LMIC.frame[LMIC.dataBeg]);
                 // i (0..255) can be used as data for any other application
                 // like controlling a relay, showing a display message etc.
@@ -197,7 +197,7 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
         LMIC_setupChannel(6, 867700000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
         LMIC_setupChannel(7, 867900000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
         LMIC_setupChannel(8, 868800000, DR_RANGE_MAP(DR_FSK,  DR_FSK),  BAND_MILLI);      // g2-band
-        
+
         // TTN defines an additional channel at 869.525Mhz using SF9 for class B
         // devices' ping slots. LMIC does not have an easy way to set this
         // frequency and support for class B is spotty and untested, so this
@@ -236,20 +236,20 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
 
 // ======================================================================================
 
-bool MuonPiLMIC::sendLoraPayload(uint8_t port, LoraMessage message)
+bool MuonPiLMIC::sendLoraPayload(uint8_t port, uint8_t* message)
 {
     Serial.flush();
     uplinkSequenceNo = uplinkSequenceNo + 1;
     LMIC.seqnoUp = uplinkSequenceNo;
 
-    LMIC_setTxData2(port, message.getBytes(), message.getLength(), 0);
+    sleeping = false;
+
+    LMIC_setTxData2(port, message, sizeof(message), 0);
 
     while(sleeping == false)
     {
         os_runloop_once();
     }
-
-    sleeping = false;
     delay(50);
     return true;
 }

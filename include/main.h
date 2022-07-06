@@ -20,7 +20,6 @@
 **
 *******************************************************************************/
 
-#include "lora_message.h"
 #include <Arduino.h>
 #include <LowPower.h>
 

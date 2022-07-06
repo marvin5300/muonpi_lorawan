@@ -14,7 +14,6 @@
 #ifndef __MuonPiLMIC__
 #define __MuonPiLMIC__
 
-#include "lora_message.h"
 #include <Arduino.h>
 #include <Wire.h>
 #include <lmic.h>
@@ -24,7 +23,7 @@ class MuonPiLMIC
 {
     public:
         bool setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, unsigned char *nwkskey);
-        bool sendLoraPayload(uint8_t port, LoraMessage message); // port can be chosen at will
+        bool MuonPiLMIC::sendLoraPayload(uint8_t port, uint8_t* message); // port can be chosen at will
     private:
 };
 
