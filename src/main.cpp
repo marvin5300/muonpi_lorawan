@@ -1,25 +1,23 @@
 /*******************************************************************************
-* AmbaSat-1 
-* Filename: main.cpp
-* AmbaSat-1 Flight Code for Sensor 01 - SHT31: Temperature & Humidity
-* 16th January 2022
-* Authors: Martin Platt, James Vonteb 
-*
-* Copyright (c) 2022 AmbaSat Ltd
-* https://ambasat.com
-*
-* To use this code, set NWKSKEY, APPSKEY & DEVADDR values as per your Dashboard
-* See the HowTo: https://ambasat.com/howto/kit-2/#/../unique-ids
-*
-* For ISM band configuration: See lmic/config.h eg. #define CFG_us915 1
-* licensed under Creative Commons Attribution-ShareAlike 3.0
-* ******************************************************************************/
+ * AmbaSat-1
+ * Filename: main.cpp
+ * AmbaSat-1 Flight Code for Sensor 01 - SHT31: Temperature & Humidity
+ * 16th January 2022
+ * Authors: Martin Platt, James Vonteb
+ *
+ * Copyright (c) 2022 AmbaSat Ltd
+ * https://ambasat.com
+ *
+ * To use this code, set NWKSKEY, APPSKEY & DEVADDR values as per your Dashboard
+ * See the HowTo: https://ambasat.com/howto/kit-2/#/../unique-ids
+ *
+ * For ISM band configuration: See lmic/config.h eg. #define CFG_us915 1
+ * licensed under Creative Commons Attribution-ShareAlike 3.0
+ * ******************************************************************************/
 
 #include "main.h"
-// #include "AmbaSatSHT31.h"
 #include "muonpi_lmic.h"
-// #include <string.h>
-// #include "AmbaSatLSM9DS1.h"
+#include <Arduino.h>
 
 // TTN *****************************
 #define DEVICEID "eui-70b3d57ed0052abe"
@@ -34,8 +32,10 @@ static const PROGMEM u1_t NWKSKEY[16] = {0xCC, 0xB8, 0xF3, 0xD3, 0xFD, 0x39, 0x7
 static const u1_t PROGMEM APPSKEY[16] = {0xA8, 0xDF, 0x3A, 0xC7, 0x51, 0xB2, 0xD1, 0x73, 0xAC, 0x58, 0x81, 0x91, 0xD2, 0x58, 0xCB, 0x4E};
 
 // LoRaWAN end-device address (DevAddr) / DO NOT SHARE
-static const u4_t DEVADDR = 0x260BC37E ;
+static const u4_t DEVADDR = 0x260BC37E;
 /********************************/
+
+osjob_t workjob;
 
 // void(* resetFunc) (void) = 0;  //declare reset function at address 0
 
@@ -47,13 +47,21 @@ MuonPiLMIC *muonpi_lmic;
 
 // ============================================================================
 
+void process_work(osjob_t *workjob)
+{
+    if (muonpi_lmic != nullptr)
+    {
+        muonpi_lmic->sendLoraPayload(1u, reinterpret_cast<uint8_t *>(test));
+    }
+}
+
 void setup()
 {
-    #ifndef SERIAL_BAUD
+#ifndef SERIAL_BAUD
     Serial.begin(DEFAULT_BAUD);
-    #else
+#else
     Serial.begin(SERIAL_BAUD);
-    #endif
+#endif
 
     while (!Serial)
         delay(10);
@@ -67,28 +75,17 @@ void setup()
     uint8_t nwkskey[sizeof(NWKSKEY)];
     memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
     memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
-    
+
     // Setup LMIC
     muonpi_lmic->setup(0x13, DEVADDR, appskey, nwkskey);
+    os_setTimedCallback(&workjob, os_getTime() + sec2osticks(TX_INTERVAL), process_work);
 }
 
 // ============================================================================
 
 void loop()
 {
-
-    Serial.print(F("Sending message. 42\n"));
-    Serial.flush();
-    delay(50);
-
-    muonpi_lmic->sendLoraPayload(1,reinterpret_cast<uint8_t*>(test));
-
-    // sleep 8 seconds * sleepcycles
-    for (int i=0; i < sleepcycles; i++)
-    {
-        LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
-    }
-    // resetFunc();
+    os_runloop_once();
 }
 
 // ============================================================================
