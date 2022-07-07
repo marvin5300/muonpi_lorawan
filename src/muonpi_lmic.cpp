@@ -63,14 +63,17 @@ const lmic_pinmap lmic_pins = {
 
 // ======================================================================================
 
+
+
+void printEvent(ev_t ev){
+
+}
 // =========================================================================================================================================
 // onEvent
 // =========================================================================================================================================
 
-void onEvent(void *pUserData, ev_t ev)
+void MuonPiLMIC::onEvent(void *pUserData, ev_t ev)
 {
-    Serial.print(os_getTime());
-    Serial.print(": ");
     switch (ev)
     {
     case EV_RXSTART:
@@ -78,6 +81,8 @@ void onEvent(void *pUserData, ev_t ev)
         break;
 
     case EV_TXSTART:
+        Serial.print(os_getTime());
+        Serial.print(": ");
         Serial.print(F("EV_TXSTART\n"));
         break;
     case EV_JOIN_TXCOMPLETE:
@@ -156,7 +161,7 @@ void onEvent(void *pUserData, ev_t ev)
     */
     default:
         Serial.print(F("Unknown event: "));
-        Serial.println((unsigned)ev);
+        // Serial.println((unsigned)ev);
         break;
     }
 }
@@ -167,6 +172,7 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
 {
     os_init(); // LMIC init
 
+    Serial.println(F("Starting"));
     LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
 
     // network ID 0x01 = Expiremental

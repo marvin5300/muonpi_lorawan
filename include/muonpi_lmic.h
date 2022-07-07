@@ -25,6 +25,8 @@ public:
     bool setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, unsigned char *nwkskey);
     bool sendLoraPayload(uint8_t port, uint8_t *message); // port can be chosen at will
     bool do_send(osjob_t *sendjob);
+    static void onEvent(void *pUserData, ev_t ev);
+
 
 private:
 };

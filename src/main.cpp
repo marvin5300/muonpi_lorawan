@@ -47,18 +47,19 @@ MuonPiLMIC *muonpi_lmic;
 
 // ============================================================================
 
-void process_work(osjob_t *workjob)
+void process_work(osjob_t *job)
 {
     if (muonpi_lmic != nullptr)
     {
         muonpi_lmic->sendLoraPayload(1u, reinterpret_cast<uint8_t *>(test));
     }
+    os_setTimedCallback(&workjob, os_getTime() + sec2osticks(TX_INTERVAL), process_work);
 }
 
 void setup()
 {
 #ifndef SERIAL_BAUD
-    Serial.begin(DEFAULT_BAUD);
+    Serial.begin(9600);
 #else
     Serial.begin(SERIAL_BAUD);
 #endif
@@ -78,7 +79,7 @@ void setup()
 
     // Setup LMIC
     muonpi_lmic->setup(0x13, DEVADDR, appskey, nwkskey);
-    os_setTimedCallback(&workjob, os_getTime() + sec2osticks(TX_INTERVAL), process_work);
+    process_work(&workjob);
 }
 
 // ============================================================================
