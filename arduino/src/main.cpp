@@ -17,6 +17,7 @@
 
 #include "main.h"
 #include "muonpi_lmic.h"
+#include "serialhandler.h"
 #include <Arduino.h>
 
 // TTN *****************************
@@ -45,27 +46,36 @@ int sleepcycles = 1; // 130 X 8 seconds = ~17 mins sleep
 
 MuonPiLMIC *muonpi_lmic;
 
+SerialHandler *serial_handler;
+
+String str{""};
+unsigned count{0};
+
 // ============================================================================
 
-void process_work(osjob_t *job)
-{
-    if (muonpi_lmic != nullptr)
-    {
-        muonpi_lmic->sendLoraPayload(1u, reinterpret_cast<uint8_t *>(test));
-    }
-    os_setTimedCallback(&workjob, os_getTime() + sec2osticks(TX_INTERVAL), process_work);
-}
+// void process_work(osjob_t *job)
+// {
+//     if (muonpi_lmic != nullptr)
+//     {
+//         muonpi_lmic->sendLoraPayload(1u, reinterpret_cast<uint8_t *>(test));
+//     }
+//     os_setTimedCallback(&workjob, os_getTime() + sec2osticks(TX_INTERVAL), process_work);
+// }
 
 void setup()
 {
 #ifndef SERIAL_BAUD
     Serial.begin(9600);
 #else
-    Serial.begin(SERIAL_BAUD);
+    Serial.begin(SERIAL_BAUD, SERIAL_8N1);
 #endif
-
+    Serial.flush();
+    str.reserve(255);
     while (!Serial)
         delay(10);
+
+
+    serial_handler = new SerialHandler();
 
     // Create the LMIC object
     muonpi_lmic = new MuonPiLMIC();
@@ -78,15 +88,22 @@ void setup()
     memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
 
     // Setup LMIC
-    muonpi_lmic->setup(0x13, DEVADDR, appskey, nwkskey);
-    process_work(&workjob);
+    // muonpi_lmic->setup(0x13, DEVADDR, appskey, nwkskey);
+
+    // process_work(&workjob);
 }
 
 // ============================================================================
 
 void loop()
 {
-    os_runloop_once();
+    auto data_avail = serial_handler->read(str);
+    if (data_avail){
+        count = count + 1;
+        serial_handler->send(str + " total: " + String(count));
+        str = "";
+    }
+    // os_runloop_once();
 }
 
 // ============================================================================
