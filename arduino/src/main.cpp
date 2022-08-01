@@ -66,7 +66,7 @@ String str{""};
 void setup()
 {
 #ifndef SERIAL_BAUD
-    Serial.begin(9600);
+    Serial.begin(9600, SERIAL_8N1);
 #else
     Serial.begin(SERIAL_BAUD, SERIAL_8N1);
 #endif

@@ -221,7 +221,7 @@ auto serial::receive() -> std::string
         printf("Error %i from read: %s\n", errno, std::strerror(errno));
         return "";         
     }
-    for (std::size_t i = 0; i < num_bytes; i++)
+    for (std::size_t i = 0; i < static_cast<std::size_t>(num_bytes); i++)
     {
         buf += rxBuf[i];
     }
@@ -264,7 +264,7 @@ auto serial::receive() -> std::string
                     return "";
                 }
                 std::string temp = "";
-                for (int k = i + 5 + payload_size; k < buf.size(); k++)
+                for (std::size_t k = i + 5 + payload_size; k < buf.size(); k++)
                 {
                     temp += buf[k];
                 }

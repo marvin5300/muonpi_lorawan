@@ -19,7 +19,7 @@
 #include <hal/hal.h>
 
 const uint8_t MESSAGE_HEADER = 0xf9u;
-constexpr size_t buffer_size = 0xff;
+constexpr size_t buffer_size = 0xffu;
 
 bool SerialHandler::read(String &str) {
 	while (Serial.available() > 0)
@@ -46,7 +46,7 @@ bool SerialHandler::read(String &str) {
 					return false;
 				}
 				String temp = "";
-				for (int k = i + 5 + payload_size; k < buf.length(); k++) {
+				for (size_t k = i + 5 + payload_size; k < buf.length(); k++) {
 					temp += buf[k];
 				}
 				buf = temp;
