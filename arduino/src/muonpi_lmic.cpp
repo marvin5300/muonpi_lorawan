@@ -35,6 +35,7 @@
  *******************************************************************************/
 
 #include "muonpi_lmic.h"
+#include "serialhandler.h"
 #include <Arduino.h>
 #include <lmic.h>
 #include <hal/hal.h>
@@ -48,7 +49,7 @@ static osjob_t sendjob;
 
 uint32_t uplinkSequenceNo = 0; // aka FCnt
 
-uint8_t *data = nullptr;
+String MuonPiLMIC::data{};
 
 // arduino lmic pin mapping
 const lmic_pinmap lmic_pins = {
@@ -63,7 +64,7 @@ const lmic_pinmap lmic_pins = {
 
 // ======================================================================================
 
-
+SerialHandler *MuonPiLMIC::m_serial_handler{nullptr};
 
 void printEvent(ev_t ev){
 
@@ -81,98 +82,97 @@ void MuonPiLMIC::onEvent(void *pUserData, ev_t ev)
         break;
 
     case EV_TXSTART:
-        Serial.print(os_getTime());
-        Serial.print(": ");
-        Serial.print(F("EV_TXSTART\n"));
+        m_serial_handler->send(String(os_getTime() + String(": EV_TXSTART")));
         break;
     case EV_JOIN_TXCOMPLETE:
-        Serial.print(F("EV_JOIN_TXCOMPLETE\n"));
+        m_serial_handler->send(F("EV_JOIN_TXCOMPLETE"));
     case EV_TXCANCELED:
-        Serial.print(F("EV_TXCANCELLED\n"));
+        m_serial_handler->send(F("EV_TXCANCELLED"));
         break;
     case EV_SCAN_TIMEOUT:
-        Serial.print(F("EV_SCAN_TIMEOUT\n"));
+        m_serial_handler->send(F("EV_SCAN_TIMEOUT"));
         break;
     case EV_BEACON_FOUND:
-        Serial.print(F("EV_BEACON_FOUND\n"));
+        m_serial_handler->send(F("EV_BEACON_FOUND"));
         break;
     case EV_BEACON_MISSED:
-        Serial.print(F("EV_BEACON_MISSED\n"));
+        m_serial_handler->send(F("EV_BEACON_MISSED"));
         break;
     case EV_BEACON_TRACKED:
-        Serial.print(F("EV_BEACON_TRACKED\n"));
+        m_serial_handler->send(F("EV_BEACON_TRACKED"));
         break;
     case EV_JOINING:
-        Serial.print(F("EV_JOINING\n"));
+        m_serial_handler->send(F("EV_JOINING"));
         break;
     case EV_JOINED:
-        Serial.print(F("EV_JOINED\n"));
+        m_serial_handler->send(F("EV_JOINED"));
         break;
     /*
     || This event is defined but not used in the code. No
     || point in wasting codespace on it.
     ||
     || case EV_RFU1:
-    ||     Serial.println(F("EV_RFU1"));
+    ||     m_serial_handler->send(F("EV_RFU1"));
     ||     break;
     */
     case EV_JOIN_FAILED:
-        Serial.print(F("EV_JOIN_FAILED\n"));
+        m_serial_handler->send(F("EV_JOIN_FAILED"));
         break;
     case EV_REJOIN_FAILED:
-        Serial.print(F("EV_REJOIN_FAILED\n"));
+        m_serial_handler->send(F("EV_REJOIN_FAILED"));
         break;
     case EV_TXCOMPLETE:
-        Serial.print(F("EV_TXCOMPLETE (includes waiting for RX windows)\n"));
+        m_serial_handler->send(F("EV_TXCOMPLETE"));
         if (LMIC.txrxFlags & TXRX_ACK)
-            Serial.print(F("Received ack\n"));
+            m_serial_handler->send(F("Received ack"));
         if (LMIC.dataLen)
         {
-            Serial.println(F("Received "));
-            Serial.println(LMIC.dataLen);
-            Serial.println(F(" bytes of payload"));
+            m_serial_handler->send(F("Received "));
+            m_serial_handler->send(LMIC.dataLen);
+            m_serial_handler->send(F(" bytes of payload"));
         }
         // Schedule next transmission
         // will be called by main loop
         break;
     case EV_LOST_TSYNC:
-        Serial.print(F("EV_LOST_TSYNC\n"));
+        m_serial_handler->send(F("EV_LOST_TSYNC\n"));
         break;
     case EV_RESET:
-        Serial.print(F("EV_RESET\n"));
+        m_serial_handler->send(F("EV_RESET\n"));
         break;
     case EV_RXCOMPLETE:
         // data received in ping slot
-        Serial.print(F("EV_RXCOMPLETE\n"));
+        m_serial_handler->send(F("EV_RXCOMPLETE\n"));
         break;
     case EV_LINK_DEAD:
-        Serial.print(F("EV_LINK_DEAD\n"));
+        m_serial_handler->send(F("EV_LINK_DEAD\n"));
         break;
     case EV_LINK_ALIVE:
-        Serial.print(F("EV_LINK_ALIVE\n"));
+        m_serial_handler->send(F("EV_LINK_ALIVE\n"));
         break;
     /*
     || This event is defined but not used in the code. No
     || point in wasting codespace on it.
     ||
     || case EV_SCAN_FOUND:
-    ||    Serial.println(F("EV_SCAN_FOUND"));
+    ||    m_serial_handler->send(F("EV_SCAN_FOUND"));
     ||    break;
     */
     default:
-        Serial.print(F("Unknown event: "));
-        // Serial.println((unsigned)ev);
+        m_serial_handler->send(F("Unknown event: "));
+        // m_serial_handler->send((unsigned)ev);
         break;
     }
 }
 
 // ======================================================================================
 
-bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, unsigned char *nwkskey)
+bool MuonPiLMIC::setup(devaddr_t devaddr, unsigned char *appskey, unsigned char *nwkskey, SerialHandler *f_serial_handler)
 {
+    m_serial_handler = f_serial_handler;
     os_init(); // LMIC init
 
-    Serial.println(F("Starting"));
+    m_serial_handler->send(F("Starting"));
     LMIC_reset(); // Reset the MAC state. Session and pending data transfers will be discarded.
 
     // network ID 0x01 = Expiremental
@@ -196,9 +196,12 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
     LMIC.dn2Dr = DR_SF9;
 
     // Set data rate and transmit power for uplink (note: txpow seems to be ignored by the library)
-    LMIC_setDrTxpow(DR_SF12, 20);
+    LMIC_setDrTxpow(static_cast<dr_t>(DR_SF12), static_cast<s1_t>(20));
 
     LMIC_setAdrMode(false);
+
+    uint32_t clockError = (LMIC_CLOCK_ERROR_PPM / 100) * (MAX_CLOCK_ERROR / 100) / 100;
+    LMIC_setClockError(clockError);
 
     LMIC_registerEventCb(&onEvent, nullptr);
     return true;
@@ -206,30 +209,28 @@ bool MuonPiLMIC::setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, un
 
 // ======================================================================================
 
-bool MuonPiLMIC::do_send(osjob_t *workjob)
+void MuonPiLMIC::do_send(osjob_t *workjob)
 {
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND)
     {
-        Serial.println(F("OP_TXRXPEND, not sending"));
-        return false;
+        m_serial_handler->send(F("OP_TXRXPEND, not sending"));
+        return;
     }
     else
     {
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, data, sizeof(data) - 1, 0);
-        Serial.println(F("Packet queued"));
+        LMIC_setTxData2(1, data.c_str(), sizeof(data) - 1, 0);
+        m_serial_handler->send("Packed queued: " + data);
     }
     // Next TX is scheduled after TX_COMPLETE event.
-    return true;
 }
 
-bool MuonPiLMIC::sendLoraPayload(uint8_t port, uint8_t *message)
+void MuonPiLMIC::sendLoraPayload(uint8_t port, String &message)
 {
-    Serial.flush();
     data = message;
     uplinkSequenceNo = uplinkSequenceNo + 1;
     LMIC.seqnoUp = uplinkSequenceNo;
 
-    return do_send(&sendjob);
+    os_setCallback(&sendjob, do_send);
 }

@@ -162,7 +162,6 @@ auto serial::init(const unsigned baud_rate) -> bool
         printf("Error %i from tcsetattr: %s\n", errno, std::strerror(errno));
         return false;
     }
-    int status{0};
 
     // std::this_thread::sleep_for(std::chrono::milliseconds(2));
     // fcntl(serial_port, F_SETFL, 0);
@@ -216,13 +215,6 @@ auto serial::send(const std::string &data) const -> bool
 
 auto serial::receive() -> std::string
 {
-    // int bytes;
-    // ioctl(serial_port, FIONREAD, &bytes);
-    // std::cout << bytes << " read" << std::endl;
-    // if (bytes < 4)
-    // {
-    //     return "";
-    // }
     char rxBuf[buffer_size];
     auto num_bytes = read(serial_port, &rxBuf, buffer_size);
     if (num_bytes < 0){
@@ -236,9 +228,10 @@ auto serial::receive() -> std::string
     if (m_verbosity > 0)
     {
         std::cout << num_bytes << " bytes read, buf: " << std::endl;
-    }
-    for (auto c : buf){
-        std::cout << std::hex << (static_cast<uint16_t>(c) & 0xff) << "\n";
+        for (auto c : buf)
+        {
+            std::cout << std::hex << (static_cast<uint16_t>(c) & 0xff) << "\n";
+        }
     }
     std::cout << std::flush;
     if (buf.size() < 4)

@@ -9,14 +9,15 @@
  * message Protocol arduino - raspi, every value equals one byte.
  * raspi -> arduino: <header> <multiplexer> <4command_bits+00+data_bit[9]+data_bit[8]> <data_lsb> <chipID> <chkA> <chkB>
  * arduino -> raspi: <header> <multiplexer> <4command_bits+00+data_bit[9]+data_bit[8]> <data_lsb> <chipID> <chkA> <chkB>
- * 
+ *
  * checksum bytes are created from string NOT containing the header byte
  */
 #include "serialhandler.h"
 #include <Arduino.h>
 #include <stdint.h>
+#include <lmic.h>
+#include <hal/hal.h>
 
-String buf = "";
 const uint8_t MESSAGE_HEADER = 0xf9u;
 constexpr size_t buffer_size = 0xff;
 
@@ -70,7 +71,11 @@ void SerialHandler::fletcherChkSum(const String&  buf, uint8_t& chkA, uint8_t& c
     }
 }
 
-bool SerialHandler::send(String &data) {
+bool SerialHandler::send(const char *data){
+	return send(String(data));
+}
+
+bool SerialHandler::send(const String &data) {
 	if (data.length() > 255u){
 		return false;
 	}
@@ -83,6 +88,7 @@ bool SerialHandler::send(String &data) {
 	txBuf += static_cast<char>(chkA);
 	txBuf += static_cast<char>(chkB);
 	Serial.write(txBuf.c_str());
-	Serial.flush();
+	// delay(100);
+	// Serial.flush();
 	return true;
 }

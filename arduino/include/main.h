@@ -22,8 +22,8 @@
 
 #define DEFAULT_BAUD 9600
 
-#define TX_INTERVAL 10
+// #define TX_INTERVAL 10
 
-// -----------------------------------------------------------------------------
-// TTN payloads - see: https://www.thethingsnetwork.org/docs/devices/bytes.html
-// -----------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------
+    // TTN payloads - see: https://www.thethingsnetwork.org/docs/devices/bytes.html
+    // -----------------------------------------------------------------------------

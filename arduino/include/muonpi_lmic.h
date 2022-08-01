@@ -14,21 +14,25 @@
 #ifndef __MuonPiLMIC__
 #define __MuonPiLMIC__
 
+#include "serialhandler.h"
 #include <Arduino.h>
 #include <Wire.h>
 #include <lmic.h>
 #include <hal/hal.h>
 
+#define LMIC_CLOCK_ERROR_PPM 30000
+
 class MuonPiLMIC
 {
 public:
-    bool setup(u4_t netid, devaddr_t devaddr, unsigned char *appskey, unsigned char *nwkskey);
-    bool sendLoraPayload(uint8_t port, uint8_t *message); // port can be chosen at will
-    bool do_send(osjob_t *sendjob);
+    bool setup(devaddr_t devaddr, unsigned char *appskey, unsigned char *nwkskey, SerialHandler *f_serial_handler = nullptr);
+    void sendLoraPayload(uint8_t port, String &message); // port can be chosen at will
+    static void do_send(osjob_t *sendjob);
     static void onEvent(void *pUserData, ev_t ev);
 
-
 private:
+    static SerialHandler *m_serial_handler;
+    static String data;
 };
 
 #ifdef __cplusplus

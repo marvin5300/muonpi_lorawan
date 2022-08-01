@@ -48,8 +48,9 @@ MuonPiLMIC *muonpi_lmic;
 
 SerialHandler *serial_handler;
 
-String str{""};
 unsigned count{0};
+
+String str{""};
 
 // ============================================================================
 
@@ -70,10 +71,9 @@ void setup()
     Serial.begin(SERIAL_BAUD, SERIAL_8N1);
 #endif
     Serial.flush();
-    str.reserve(255);
+    // str.reserve(255);
     while (!Serial)
         delay(10);
-
 
     serial_handler = new SerialHandler();
 
@@ -88,7 +88,7 @@ void setup()
     memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
 
     // Setup LMIC
-    // muonpi_lmic->setup(0x13, DEVADDR, appskey, nwkskey);
+    muonpi_lmic->setup(DEVADDR, appskey, nwkskey, serial_handler);
 
     // process_work(&workjob);
 }
@@ -98,12 +98,18 @@ void setup()
 void loop()
 {
     auto data_avail = serial_handler->read(str);
-    if (data_avail){
-        count = count + 1;
-        serial_handler->send(str + " total: " + String(count));
+    if (data_avail)
+    {
+        // if (str.c_str() == "reset"){
+        //     serial_handler->send("reset was received");
+        //     delay(2000);
+        //     resetFunc();
+        // }
+        char *arr = str.c_str();
+        muonpi_lmic->sendLoraPayload(1u, reinterpret_cast<uint8_t *>(arr));
         str = "";
     }
-    // os_runloop_once();
+    os_runloop_once();
 }
 
 // ============================================================================
